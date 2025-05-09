@@ -1,6 +1,9 @@
-Build and run:
+Build:
+
 python setup.py build_ext --inplace
+
 python demo.py
 
-to clean run:
+Clean:
+
 python setup.py clean
