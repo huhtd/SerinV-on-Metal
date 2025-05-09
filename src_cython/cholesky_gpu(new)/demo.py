@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import time
 
 # Import the GPU-accelerated function
-from metal_cholesky import cholesky_gpu   # ⬅️ replace CPU version
+from metal_cholesky import cholesky_gpu 
 
 def generate_positive_definite_matrix_32int(N):
     """

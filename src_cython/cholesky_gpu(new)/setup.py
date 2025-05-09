@@ -9,7 +9,10 @@ ext = Extension(
     sources=["metal_cholesky.pyx", "mps_cholesky.m"],
     include_dirs=[numpy.get_include()],
     extra_compile_args=["-fobjc-arc"],
-    extra_link_args=["-framework", "Metal", "-framework", "MetalPerformanceShaders"],
+    extra_link_args=[
+        "-framework", "Metal",
+        "-framework", "MetalPerformanceShaders",
+    ],
     language="c",
 )
 
