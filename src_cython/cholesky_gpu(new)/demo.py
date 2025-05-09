@@ -42,7 +42,7 @@ if __name__ == "__main__":
     cpu_avg   = cpu_total / num_mats
 
     # --------------- summary ------------------------------------------
-    print(f"Size N = {N},  batches = {num_mats}")
+    print(f"Size Matrix = {N},  batches = {num_mats}")
     print(f"Avg GPU time : {gpu_avg*1e3:8.1f} ms")
     print(f"Avg CPU time : {cpu_avg*1e3:8.1f} ms")
     if cpu_avg > 0:

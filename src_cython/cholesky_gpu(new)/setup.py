@@ -3,6 +3,7 @@ from Cython.Build import cythonize
 from distutils.command.clean import clean as _clean  
 import pathlib                                        
 import numpy
+import shutil  # For removing directories
 
 ext = Extension(
     "metal_cholesky",
@@ -16,14 +17,28 @@ ext = Extension(
     language="c",
 )
 
-# --- clean: remove generated metal_cholesky.c ------------
+# --- clean: remove generated files including the build folder ------------
 class clean(_clean):
     def run(self):
         _clean.run(self)
+        
+        # Remove the metal_cholesky.c file
         p = pathlib.Path("metal_cholesky.c")
         if p.exists():
             print(f"removing {p}")
             p.unlink()
+
+        # Remove the build folder
+        build_dir = pathlib.Path("build")
+        if build_dir.exists() and build_dir.is_dir():
+            print(f"removing {build_dir}")
+            shutil.rmtree(build_dir)
+
+        # Remove any .so file in the current directory
+        for so_file in pathlib.Path(".").glob("*.so"):
+            if so_file.exists():
+                print(f"removing {so_file}")
+                so_file.unlink()
 
 setup(
     name="metal_cholesky",
