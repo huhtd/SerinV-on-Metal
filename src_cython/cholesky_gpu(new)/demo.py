@@ -32,8 +32,8 @@ def generate_posdef_matrix(n: int, dtype=np.float32) -> np.ndarray:
 
 if __name__ == "__main__":
     mode      = 0          # 0 = both, 1 = GPU only, 2 = CPU only
-    N         = 30000       # matrix size
-    num_mats  = 2         # how many matrices to factor
+    N         = 8000       # matrix size
+    num_mats  = 4         # how many matrices to factor
 
 
 
