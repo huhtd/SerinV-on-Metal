@@ -1,71 +1,53 @@
-// mps_cholesky.m  ── Objective-C, ARC enabled
+// mps_cholesky.m  –  Objective-C, ARC • in-place variant
 #import "mps_cholesky.h"
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #import <MetalPerformanceShaders/MetalPerformanceShaders.h>
 
-void mps_cholesky(const float *A_in, float *L_out, int N)
+void mps_cholesky(float *A, int N)           /* ← single pointer, no return */
 {
-    /* ---------- one-time static objects ---------- */
-    static id<MTLDevice>  dev  = nil;
-    static id<MTLCommandQueue> q = nil;
+    /* ---------- one-time objects ---------- */
+    static id<MTLDevice>       dev  = nil;
+    static id<MTLCommandQueue> q    = nil;
     static MPSMatrixDecompositionCholesky *chol = nil;
-    static dispatch_once_t once;
+    static dispatch_once_t     once;
 
     dispatch_once(&once, ^{
         dev  = MTLCreateSystemDefaultDevice();
         q    = [dev newCommandQueue];
         chol = [[MPSMatrixDecompositionCholesky alloc] initWithDevice:dev
                                                                lower:true
-                                                               order:N];
+                                                               order:16];    // build once for max N
     });
 
-    size_t bytes = (size_t)N * (size_t)N * sizeof(float);
+    const size_t bytes = (size_t)N * (size_t)N * sizeof(float);
 
-    /* ---------- buffers ---------- */
-    id<MTLBuffer> sA = [dev newBufferWithBytes:A_in          /* staging (shared) */
-                                         length:bytes
-                                        options:MTLResourceStorageModeShared];
-
-    id<MTLBuffer> dA = [dev newBufferWithLength:bytes        /* private for speed */
-                                        options:MTLResourceStorageModePrivate];
-
-    id<MTLBuffer> dL = [dev newBufferWithLength:bytes        /* shared for read-back */
-                                        options:MTLResourceStorageModeShared];
-    memset(dL.contents, 0, bytes);                           /* zero entire result */
+    /* ---------- wrap caller’s buffer ---------- */
+    id<MTLBuffer> buf =
+        [dev newBufferWithBytesNoCopy:(void *)A
+                               length:bytes
+                              options:MTLResourceStorageModeShared
+                          deallocator:nil];
 
     /* ---------- command buffer ---------- */
     id<MTLCommandBuffer> cb = [q commandBuffer];
 
-    /* blit host→device : sA → dA */
-    id<MTLBlitCommandEncoder> bl = [cb blitCommandEncoder];
-    [bl copyFromBuffer:sA
-            sourceOffset:0
-                toBuffer:dA
-       destinationOffset:0
-                    size:bytes];
-    [bl endEncoding];
-
-    /* run Cholesky */
+    /* ---------- encode Cholesky (in-place) ---------- */
     MPSMatrixDescriptor *desc =
         [MPSMatrixDescriptor matrixDescriptorWithRows:N
                                               columns:N
                                              rowBytes:N * sizeof(float)
                                              dataType:MPSDataTypeFloat32];
 
-    MPSMatrix *A = [[MPSMatrix alloc] initWithBuffer:dA descriptor:desc];
-    MPSMatrix *L = [[MPSMatrix alloc] initWithBuffer:dL descriptor:desc];
+    MPSMatrix *M = [[MPSMatrix alloc] initWithBuffer:buf descriptor:desc];
 
-    [chol encodeToCommandBuffer:cb sourceMatrix:A resultMatrix:L status:nil];
+    [chol encodeToCommandBuffer:cb sourceMatrix:M resultMatrix:M status:nil];
 
-    /* copy back after GPU finishes */
-    [cb addCompletedHandler:^(id<MTLCommandBuffer>) {
-        /* blank upper triangle the kernel left untouched */
-        float *p = (float *)dL.contents;
+    /* ---------- zero upper triangle after GPU ---------- */
+    [cb addCompletedHandler:^(__unused id<MTLCommandBuffer>){
         for (int i = 0; i < N; ++i)
             for (int j = i + 1; j < N; ++j)
-                p[i * N + j] = 0.0f;
-        memcpy(L_out, p, bytes);
+                A[i * N + j] = 0.0f;
     }];
 
     [cb commit];
