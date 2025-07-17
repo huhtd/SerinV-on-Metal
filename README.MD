@@ -1,5 +1,5 @@
-Simply run "make" to compile, and "make clean" to remove compiled files.  
+This repository has the files for the project "Extending the Structured Sparse
+Solver Serinv Capabilities to
+Apple Silicon using METAL".
 
-To precompute matrices run the file "generate_matrices.py".  
-
-Test with "test_gpu_multiply.py" and "test_gpu_cholesky.py".
+The instructions for compiling and running are in the source folder.
