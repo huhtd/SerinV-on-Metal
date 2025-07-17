@@ -4,9 +4,9 @@ import time
 import matplotlib.pyplot as plt
 import os
 
+from matplotlib.ticker import ScalarFormatter
 from blas_cholesky_wrapper import cpu_blas_cholesky_decompose
 from gpu_mps_cholesky_wrapper import gpu_mps_cholesky_decompose
-
 
 # Ensure output folder exists
 os.makedirs("figures", exist_ok=True)
@@ -61,7 +61,7 @@ blas_times_s  = np.array(blas_times)  * 1e-9
 mps_times_s   = np.array(mps_times)   * 1e-9
 sizes_np = np.array(sizes)
 
-# Reference curve (1/3 N^3 scaling for Cholesky)
+# Trend Line curve (1/3 N^3 scaling for Cholesky)
 N_ref = np.linspace(min(sizes_np), max(sizes_np), 100)
 T_ref = (1/3) * 1e-12 * N_ref**3
 
@@ -70,10 +70,11 @@ plt.figure(figsize=(10, 6))
 plt.plot(sizes_np, numpy_times_s, 'r-o', label='NumPy (CPU)')
 plt.plot(sizes_np, blas_times_s, 'b-o', label='BLAS (Accelerate)')
 plt.plot(sizes_np, mps_times_s,  'g-o', label='MPS (Metal GPU)')
-plt.plot(N_ref, T_ref, 'k--', label='Reference $\\frac{1}{3}N^3$')
 plt.title("Cholesky Timing: NumPy vs BLAS vs MPS")
 plt.xlabel("Matrix Size (N x N)")
 plt.ylabel("Time (seconds)")
+plt.xticks(sizes_np, rotation=45)
+plt.ylim(bottom=0)
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
@@ -85,10 +86,12 @@ plt.figure(figsize=(10, 6))
 plt.loglog(sizes_np, numpy_times_s, 'r-o', label='NumPy (CPU)')
 plt.loglog(sizes_np, blas_times_s, 'b-o', label='BLAS (Accelerate)')
 plt.loglog(sizes_np, mps_times_s,  'g-o', label='MPS (Metal GPU)')
-plt.loglog(N_ref, T_ref, 'k--', label='Reference $\\frac{1}{3}N^3$')
-plt.title("Cholesky Timing (Log-Log) with $\\frac{1}{3}N^3$ Reference")
+plt.loglog(N_ref, T_ref, 'k--', label='Trend Line $\\frac{1}{3}N^3$')
+plt.title("Cholesky Timing (Log-Log) with $\\frac{1}{3}N^3$ Trend Line")
 plt.xlabel("Matrix Size (log N)")
 plt.ylabel("Time (log seconds)")
+plt.xticks(sizes_np, sizes_np, rotation=45)
+plt.gca().get_xaxis().set_major_formatter(ScalarFormatter())
 plt.legend()
 plt.grid(True, which='both')
 plt.tight_layout()

@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import os
 from gpu_cpu_wrapper import gpu_mps_multiply, cpu_blas_multiply
+from matplotlib.ticker import MultipleLocator, ScalarFormatter
 
 # Ensure output folder exists
 os.makedirs("figures", exist_ok=True)
@@ -58,7 +59,7 @@ numpy_times_s = np.array(numpy_times) * 1e-9
 blas_times_s  = np.array(blas_times)  * 1e-9
 mps_times_s   = np.array(mps_times)   * 1e-9
 
-### 1. Standard Linear Plot ###
+### 1. Linear Plot with rotated ticks and 0.5s y-tick ###
 plt.figure(figsize=(10, 6))
 plt.plot(sizes_np, blas_times_s, 'b-o', label='CPU (BLAS - Accelerate)')
 plt.plot(sizes_np, mps_times_s, 'g-o', label='GPU (MPS)')
@@ -66,24 +67,29 @@ plt.plot(sizes_np, numpy_times_s, 'r-o', label='CPU (NumPy)')
 plt.title("Matrix Multiplication Timing: NumPy vs BLAS vs MPS")
 plt.xlabel("Matrix Size (N x N)")
 plt.ylabel("Time (seconds)")
+plt.xticks(sizes_np, rotation=45)
+plt.gca().yaxis.set_major_locator(MultipleLocator(0.5))  # <- Y-axis every 0.5s
+plt.ylim(bottom=0)
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.savefig("figures/matmul_timing.pdf", format='pdf')
 plt.show()
 
-### 2. Log-Log Plot with 2N^3 Reference ###
+### 2. Log-Log Plot with readable x-ticks and rotated labels ###
 N_ref = np.linspace(min(sizes_np), max(sizes_np), 100)
-T_ref = 2e-12 * N_ref**3  # Reference curve for GEMM ~ 2N^3 FLOPs
+T_ref = 2e-12 * N_ref**3  # Trend Line for GEMM ~ 2N^3 FLOPs
 
 plt.figure(figsize=(10, 6))
 plt.loglog(sizes_np, blas_times_s, 'b-o', label='CPU (BLAS - Accelerate)')
 plt.loglog(sizes_np, mps_times_s, 'g-o', label='GPU (MPS)')
 plt.loglog(sizes_np, numpy_times_s, 'r-o', label='CPU (NumPy)')
-plt.loglog(N_ref, T_ref, 'k--', label='Reference $2N^3$')
-plt.title("Matrix Multiplication Timing (Log-Log) with $2N^3$ Reference")
+plt.loglog(N_ref, T_ref, 'k--', label='Trend Line $2N^3$')
+plt.title("Matrix Multiplication Timing (Log-Log) with $2N^3$ Trend Line")
 plt.xlabel("Matrix Size (log N)")
 plt.ylabel("Time (log seconds)")
+plt.xticks(sizes_np, sizes_np, rotation=45)  # <- Custom tick locations and labels
+plt.gca().get_xaxis().set_major_formatter(ScalarFormatter())  # <- Disable sci notation
 plt.legend()
 plt.grid(True, which='both')
 plt.tight_layout()
