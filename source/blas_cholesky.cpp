@@ -10,7 +10,7 @@ extern "C" void cpu_blas_cholesky(float* A, unsigned int n) {
     // But Accelerate has row-major version using LAPACK_ROW_MAJOR
     // We’ll transpose it before and after
 
-    // In-place factorization (LAPACK spotrf returns result in A)
+    // In-place factorization
     // Lower triangle version
     spotrf_("L", &N, A, &lda, &info);
 

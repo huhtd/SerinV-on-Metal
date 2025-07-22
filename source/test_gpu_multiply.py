@@ -25,27 +25,50 @@ for N in sizes:
     print(f"\nRunning size: {N}x{N}")
     A = get_matrix(N)
     B = get_matrix(N)
+    
+    j = 5  # Number of averaged runs
 
     # NumPy
-    start = time.perf_counter_ns()
-    C_numpy = A @ B
-    numpy_time = time.perf_counter_ns() - start
+    current_average_numpy = []
+    #warm up run
+    _ = A @ B
+    for i in range (j):
+        # Measure time for NumPy multiplication
+        start = time.perf_counter_ns()
+        C_numpy = A @ B
+        numpy_time_current = time.perf_counter_ns() - start
+        current_average_numpy.append(numpy_time_current)
+    numpy_time = np.mean(current_average_numpy)
     numpy_times.append(numpy_time)
-    print(f"NumPy took {numpy_time:.2f} ns")
+    print(f"NumPy took {numpy_time:.2f} ns on average over {j} runs")
 
     # CPU BLAS
-    start = time.perf_counter_ns()
-    C_cpu = cpu_blas_multiply(A, B)
-    cpu_time = time.perf_counter_ns() - start
-    blas_times.append(cpu_time)
-    print(f"CPU (BLAS) took {cpu_time:.2f} ns")
+    current_average_blas = []
+    # warm up run
+    _ = cpu_blas_multiply(A, B)
+    for i in range(j):
+        # Measure time for BLAS multiplication
+        start = time.perf_counter_ns()
+        C_cpu = cpu_blas_multiply(A, B)
+        blas_time_current = time.perf_counter_ns() - start
+        current_average_blas.append(blas_time_current)
+    blas_time = np.mean(current_average_blas)
+    blas_times.append(blas_time)
+    print(f"CPU (BLAS) took {blas_time:.2f} ns on average over {j} runs")
 
     # GPU MPS
-    start = time.perf_counter_ns()
-    C_gpu = gpu_mps_multiply(A, B)
-    gpu_time = time.perf_counter_ns() - start
-    mps_times.append(gpu_time)
-    print(f"MPS (GPU) took {gpu_time:.2f} ns")
+    current_average_mps = []
+    # warm up run
+    _ = gpu_mps_multiply(A, B)
+    for i in range(j):
+        # Measure time for MPS multiplication
+        start = time.perf_counter_ns()
+        C_gpu = gpu_mps_multiply(A, B)
+        mps_time_current = time.perf_counter_ns() - start
+        current_average_mps.append(mps_time_current)
+    mps_time = np.mean(current_average_mps)
+    mps_times.append(mps_time)
+    print(f"GPU (MPS) took {mps_time:.2f} ns on average over {j} runs")
 
     # Relative error check
     rel_err_blas = np.linalg.norm(C_numpy - C_cpu) / np.linalg.norm(C_numpy)
