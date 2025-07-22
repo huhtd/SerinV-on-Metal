@@ -31,11 +31,11 @@ for N in sizes:
     # NumPy
     current_average_numpy = []
     #warm up run
-    _ = A @ B
+    _ = np.matmul(A,B)
     for i in range (j):
         # Measure time for NumPy multiplication
         start = time.perf_counter_ns()
-        C_numpy = A @ B
+        C_numpy = np.matmul(A,B)
         numpy_time_current = time.perf_counter_ns() - start
         current_average_numpy.append(numpy_time_current)
     numpy_time = np.mean(current_average_numpy)
